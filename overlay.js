@@ -179,10 +179,13 @@ async function pollESPN() {
                 
                 // Try to find the latest scoring play details
                 if (comp.details && comp.details.length > 0) {
-                    const latestGoal = comp.details[comp.details.length - 1];
-                    const clock = latestGoal.clock ? latestGoal.clock.displayValue : '';
-                    const player = latestGoal.participants && latestGoal.participants[0] ? latestGoal.participants[0].athlete.displayName : 'Player';
-                    scorerText = `${player} (${clock})`;
+                    const scoringPlays = comp.details.filter(d => d.scoringPlay === true);
+                    if (scoringPlays.length > 0) {
+                        const latestGoal = scoringPlays[scoringPlays.length - 1];
+                        const clock = latestGoal.clock ? latestGoal.clock.displayValue : '';
+                        const player = latestGoal.athletesInvolved && latestGoal.athletesInvolved[0] ? latestGoal.athletesInvolved[0].shortName : 'Player';
+                        scorerText = `${player} (${clock})`;
+                    }
                 }
 
                 if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name, scorerText);

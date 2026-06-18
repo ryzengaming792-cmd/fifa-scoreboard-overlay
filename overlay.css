@@ -33,7 +33,9 @@ body {
     left: 50px;
     display: flex;
     flex-direction: column;
-    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6));
+    /* Use box-shadow instead of filter: drop-shadow for vastly better performance in OBS */
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+    border-radius: 14px;
     animation: fadeIn 1s ease-out;
     will-change: transform, opacity;
 }
@@ -324,10 +326,8 @@ body {
 @keyframes mainOverlayPulse {
     0% {
         transform: scale(1) translateZ(0);
-        filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 0 rgba(255, 0, 85, 0));
     }
     100% {
         transform: scale(1.05) translateZ(0);
-        filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 0, 85, 0.8));
     }
 }
