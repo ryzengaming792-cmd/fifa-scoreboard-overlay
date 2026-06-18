@@ -6,6 +6,7 @@ const TARGET_TEAM = '';
 
 // DOM Elements
 const timeEl = document.getElementById('match-time');
+const addedTimeEl = document.getElementById('added-time');
 const t1Name = document.getElementById('name-t1');
 const t2Name = document.getElementById('name-t2');
 const t1Score = document.getElementById('score-t1');
@@ -184,9 +185,23 @@ async function pollESPN() {
                     matchStatus.textContent = 'LIVE';
                 }
                 
-                // Parse exact minutes
-                let clockStr = targetEvent.status.displayClock || "0";
-                currentState.timer.minutes = parseInt(clockStr.replace("'", "")) || currentState.timer.minutes;
+                // Time logic
+                if (targetEvent.status) {
+                    let clockStr = targetEvent.status.displayClock || "0";
+                    
+                    // Overtime parsing (e.g. "45'+3'" or "90'+5'")
+                    if (clockStr.includes('+')) {
+                        const parts = clockStr.split('+');
+                        currentState.timer.minutes = parseInt(parts[0].replace(/'/g, "")) || currentState.timer.minutes;
+                        
+                        const addedTime = parts[1].replace(/'/g, "");
+                        addedTimeEl.textContent = `+${addedTime}`;
+                        addedTimeEl.classList.remove('hidden');
+                    } else {
+                        currentState.timer.minutes = parseInt(clockStr.replace(/'/g, "")) || currentState.timer.minutes;
+                        addedTimeEl.classList.add('hidden');
+                    }
+                }
                 
             } else if (state === 'post') {
                 currentState.isLive = true;

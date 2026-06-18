@@ -74,6 +74,18 @@ body {
     text-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 
+.added-time {
+    font-size: 16px;
+    color: #ffcc00; /* Yellow warning color for stoppage time */
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+    transition: opacity 0.3s;
+}
+
+.added-time.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .match-half {
     font-size: 14px;
     color: rgba(255,255,255,0.95);
