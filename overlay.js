@@ -12,8 +12,7 @@ const t2Flag = document.getElementById('flag-t2');
 
 const goalPopup = document.getElementById('goal-popup');
 const goalScorerTeam = document.getElementById('goal-scorer-team');
-const latestGoalBanner = document.getElementById('latest-goal');
-const latestGoalText = document.getElementById('latest-goal-text');
+const goalListContainer = document.getElementById('goal-list');
 
 let currentState = {
     isLive: false,
@@ -24,6 +23,7 @@ let currentState = {
 
 let completedMatches = new Set();
 let latestMatchEndTimestamp = null;
+let currentGoalCount = 0;
 const FIVE_MINUTES = 5 * 60 * 1000;
 
 // Start local timer loop
@@ -50,18 +50,20 @@ function updateDOM() {
         t1Score.textContent = currentState.team1.score;
         t2Score.textContent = currentState.team2.score;
         scoreDivider.textContent = '-';
+        goalListContainer.style.display = 'flex';
     } else {
         timeEl.style.display = 'none';
         t1Score.style.display = 'none';
         t2Score.style.display = 'none';
         scoreDivider.textContent = 'VS';
+        goalListContainer.style.display = 'none';
     }
 
     t1Name.textContent = currentState.team1.name;
     t2Name.textContent = currentState.team2.name;
 }
 
-function triggerGoalAnimation(teamName, scorerText) {
+function triggerGoalAnimation(teamName) {
     goalScorerTeam.textContent = teamName;
     goalPopup.classList.remove('hidden');
     goalPopup.classList.remove('animate');
@@ -70,10 +72,6 @@ function triggerGoalAnimation(teamName, scorerText) {
     void goalPopup.offsetWidth;
     
     goalPopup.classList.add('animate');
-    
-    // Update the latest goal banner below scoreboard
-    latestGoalText.textContent = scorerText || `${teamName} Scored!`;
-    latestGoalBanner.classList.remove('hidden');
 
     // Add celebration glow to the main overlay itself
     const scoreboardContainer = document.querySelector('.scoreboard-container');
@@ -85,9 +83,22 @@ function triggerGoalAnimation(teamName, scorerText) {
         goalPopup.classList.remove('animate');
         scoreboardContainer.classList.remove('goal-celebration');
     }, 8500);
+}
+
+// Renders the list of goals below the scoreboard
+function renderGoalList(scoringPlays) {
+    goalListContainer.innerHTML = ''; // Clear current list
     
-    // Note: The latestGoalBanner is NO LONGER hidden after 30 seconds.
-    // It remains visible until the match ends or switches state.
+    scoringPlays.forEach(goal => {
+        const clock = goal.clock ? goal.clock.displayValue : '';
+        const player = goal.athletesInvolved && goal.athletesInvolved[0] ? goal.athletesInvolved[0].shortName : 'Player';
+        
+        const goalItem = document.createElement('div');
+        goalItem.className = 'goal-item';
+        goalItem.innerHTML = `<div class="football-icon">⚽</div><span>${player} (${clock})</span>`;
+        
+        goalListContainer.appendChild(goalItem);
+    });
 }
 
 // Fetch real-time data with AbortController to prevent OBS crashes
@@ -150,9 +161,6 @@ async function pollESPN() {
                 currentState.timer.isRunning = false;
                 matchStatus.textContent = 'MATCH ENDED';
                 
-                // Hide goal banner since match is over
-                latestGoalBanner.classList.add('hidden');
-                
                 // Handle 5-minute cooldown
                 if (!latestMatchEndTimestamp) {
                     latestMatchEndTimestamp = Date.now();
@@ -168,28 +176,34 @@ async function pollESPN() {
                 currentState.isLive = false;
                 currentState.timer.isRunning = false;
                 matchStatus.textContent = 'UPCOMING MATCH';
-                
-                // Ensure goal banner is hidden for upcoming matches
-                latestGoalBanner.classList.add('hidden');
             }
             
-            // Goal Detection
+            // Render Goal List & Detect New Goals
             if (currentState.isLive && state === 'in' && stateName !== 'STATUS_HALFTIME') {
-                let scorerText = null;
-                
-                // Try to find the latest scoring play details
                 if (comp.details && comp.details.length > 0) {
                     const scoringPlays = comp.details.filter(d => d.scoringPlay === true);
-                    if (scoringPlays.length > 0) {
-                        const latestGoal = scoringPlays[scoringPlays.length - 1];
-                        const clock = latestGoal.clock ? latestGoal.clock.displayValue : '';
-                        const player = latestGoal.athletesInvolved && latestGoal.athletesInvolved[0] ? latestGoal.athletesInvolved[0].shortName : 'Player';
-                        scorerText = `${player} (${clock})`;
+                    
+                    // Re-render the exact list of goals based on ESPN
+                    renderGoalList(scoringPlays);
+                    
+                    // If a brand new goal was added to the feed, trigger popup!
+                    if (scoringPlays.length > currentGoalCount && currentGoalCount > 0) {
+                        // We assume the new goal belongs to whichever team score increased.
+                        if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name);
+                        if (newT2Score > currentState.team2.score) triggerGoalAnimation(newT2Name);
+                    } else if (newT1Score > currentState.team1.score) {
+                        // Fallback if score increments before details array is populated
+                        triggerGoalAnimation(newT1Name);
+                    } else if (newT2Score > currentState.team2.score) {
+                        triggerGoalAnimation(newT2Name);
                     }
+                    
+                    currentGoalCount = scoringPlays.length;
+                } else {
+                    // No details yet, but trigger popup if score manually increments
+                    if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name);
+                    if (newT2Score > currentState.team2.score) triggerGoalAnimation(newT2Name);
                 }
-
-                if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name, scorerText);
-                if (newT2Score > currentState.team2.score) triggerGoalAnimation(newT2Name, scorerText);
             }
 
             currentState.team1.name = newT1Name;

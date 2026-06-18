@@ -174,35 +174,41 @@ body {
     letter-spacing: 3px;
 }
 
-/* Latest Goal Banner Overlay */
-.latest-goal {
-    align-self: flex-start;
+/* Goal List Container */
+.goal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     margin-top: 5px;
+    align-self: flex-start;
+    z-index: 3;
+}
+
+/* Individual Goal Banner */
+.goal-item {
     background: linear-gradient(90deg, var(--dark), var(--primary));
-    padding: 8px 20px;
+    padding: 6px 16px;
     border-radius: 8px;
     border: 1px solid var(--glass-border);
     display: flex;
     align-items: center;
     gap: 10px;
     font-family: 'Outfit', sans-serif;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: white;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+    animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     will-change: transform, opacity;
-    z-index: 3;
 }
 
-.latest-goal.hidden {
-    opacity: 0;
-    transform: translateY(-20px);
-    pointer-events: none;
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px) translateZ(0); }
+    to { opacity: 1; transform: translateY(0) translateZ(0); }
 }
 
 .football-icon {
-    font-size: 20px;
+    font-size: 16px;
     animation: bounceSpin 2s infinite;
     will-change: transform;
 }
