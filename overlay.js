@@ -5,14 +5,16 @@ const t2Name = document.getElementById('name-t2');
 const t1Score = document.getElementById('score-t1');
 const t2Score = document.getElementById('score-t2');
 const matchStatus = document.getElementById('match-status');
+const scoreDivider = document.querySelector('.score-divider');
 
 const goalPopup = document.getElementById('goal-popup');
 const goalScorerTeam = document.getElementById('goal-scorer-team');
 
 let currentState = {
+    isLive: false,
     team1: { name: 'USA', score: 0 },
     team2: { name: 'MEX', score: 0 },
-    timer: { minutes: 0, seconds: 0, isRunning: true }
+    timer: { minutes: 0, seconds: 0, isRunning: false }
 };
 
 // Start local timer loop
@@ -28,18 +30,34 @@ setInterval(() => {
 }, 1000);
 
 function updateDOM() {
-    // Timer
-    const min = String(currentState.timer.minutes).padStart(2, '0');
-    const sec = String(currentState.timer.seconds).padStart(2, '0');
-    timeEl.textContent = `${min}:${sec}`;
+    if (currentState.isLive) {
+        // Show timer and set status to LIVE
+        timeEl.style.display = 'block';
+        const min = String(currentState.timer.minutes).padStart(2, '0');
+        const sec = String(currentState.timer.seconds).padStart(2, '0');
+        timeEl.textContent = `${min}:${sec}`;
+        matchStatus.textContent = 'LIVE';
 
-    // Team 1
+        // Show actual scores
+        t1Score.style.display = 'inline';
+        t2Score.style.display = 'inline';
+        t1Score.textContent = currentState.team1.score;
+        t2Score.textContent = currentState.team2.score;
+        scoreDivider.textContent = '-';
+    } else {
+        // Upcoming State
+        timeEl.style.display = 'none';
+        matchStatus.textContent = 'UPCOMING MATCH';
+
+        // Hide scores, show VS
+        t1Score.style.display = 'none';
+        t2Score.style.display = 'none';
+        scoreDivider.textContent = 'VS';
+    }
+
+    // Teams
     t1Name.textContent = currentState.team1.name;
-    t1Score.textContent = currentState.team1.score;
-
-    // Team 2
     t2Name.textContent = currentState.team2.name;
-    t2Score.textContent = currentState.team2.score;
 }
 
 function triggerGoalAnimation(teamName) {
@@ -72,7 +90,7 @@ async function pollGoogle() {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
         
-        // Extract teams and scores from Google's Sports Widget (heuristic approach)
+        // Extract teams and scores from Google's Sports Widget
         const t1Node = doc.querySelector('.imso_mh__first-tn-ed, .imso_mh__tm-nm, [role="heading"]');
         const t2Nodes = doc.querySelectorAll('.imso_mh__second-tn-ed, .imso_mh__tm-nm, [role="heading"]');
         const t2Node = t2Nodes.length > 1 ? t2Nodes[1] : null;
@@ -86,14 +104,23 @@ async function pollGoogle() {
             const newT1Score = parseInt(score1Node.textContent) || 0;
             const newT2Score = parseInt(score2Node.textContent) || 0;
             
-            // Goal Detection
-            if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name);
-            if (newT2Score > currentState.team2.score) triggerGoalAnimation(newT2Name);
+            // Only trigger goal animation if it was already live (to prevent popups when first loading the page)
+            if (currentState.isLive) {
+                if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name);
+                if (newT2Score > currentState.team2.score) triggerGoalAnimation(newT2Name);
+            }
+            
+            currentState.isLive = true;
+            currentState.timer.isRunning = true;
             
             currentState.team1.name = newT1Name;
             currentState.team1.score = newT1Score;
             currentState.team2.name = newT2Name;
             currentState.team2.score = newT2Score;
+            
+            updateDOM();
+        } else {
+            console.log("No live match found. Staying in upcoming mode.");
         }
     } catch (e) {
         console.error("Failed to parse live scores", e);
