@@ -101,11 +101,11 @@ async function pollGoogle() {
         if (t1Node && t2Node && score1Node && score2Node) {
             const s1Text = score1Node.textContent.trim();
             const s2Text = score2Node.textContent.trim();
+            const newT1Name = t1Node.textContent.trim().substring(0, 3).toUpperCase();
+            const newT2Name = t2Node.textContent.trim().substring(0, 3).toUpperCase();
 
             // Verify the match has actually started by checking if scores are numbers
             if (s1Text !== '' && !isNaN(s1Text) && s2Text !== '' && !isNaN(s2Text)) {
-                const newT1Name = t1Node.textContent.trim().substring(0, 3).toUpperCase();
-                const newT2Name = t2Node.textContent.trim().substring(0, 3).toUpperCase();
                 const newT1Score = parseInt(s1Text) || 0;
                 const newT2Score = parseInt(s2Text) || 0;
                 
@@ -126,6 +126,10 @@ async function pollGoogle() {
                 updateDOM();
             } else {
                 console.log("Match found but hasn't started yet. Staying in upcoming mode.");
+                // Update the team names to show the correct upcoming teams!
+                currentState.team1.name = newT1Name;
+                currentState.team2.name = newT2Name;
+                
                 currentState.isLive = false;
                 currentState.timer.isRunning = false;
                 updateDOM();
