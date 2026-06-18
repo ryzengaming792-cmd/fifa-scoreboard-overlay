@@ -315,3 +315,19 @@ body {
     0% { transform: translate(-50%, 0) scale(1) translateZ(0); opacity: 1; }
     100% { transform: translate(-50%, 50px) scale(0.9) translateZ(0); opacity: 0; filter: blur(10px); }
 }
+
+/* Main Overlay Celebration Animation */
+.scoreboard-container.goal-celebration {
+    animation: mainOverlayPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes mainOverlayPulse {
+    0% {
+        transform: scale(1) translateZ(0);
+        filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 0 rgba(255, 0, 85, 0));
+    }
+    100% {
+        transform: scale(1.05) translateZ(0);
+        filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 0, 85, 0.8));
+    }
+}

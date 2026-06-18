@@ -75,16 +75,19 @@ function triggerGoalAnimation(teamName, scorerText) {
     latestGoalText.textContent = scorerText || `${teamName} Scored!`;
     latestGoalBanner.classList.remove('hidden');
 
-    // Hide popup after animation
+    // Add celebration glow to the main overlay itself
+    const scoreboardContainer = document.querySelector('.scoreboard-container');
+    scoreboardContainer.classList.add('goal-celebration');
+
+    // Hide popup and remove main overlay glow after animation
     setTimeout(() => {
         goalPopup.classList.add('hidden');
         goalPopup.classList.remove('animate');
+        scoreboardContainer.classList.remove('goal-celebration');
     }, 8500);
     
-    // Keep the banner up for 30 seconds
-    setTimeout(() => {
-        latestGoalBanner.classList.add('hidden');
-    }, 30000);
+    // Note: The latestGoalBanner is NO LONGER hidden after 30 seconds.
+    // It remains visible until the match ends or switches state.
 }
 
 // Fetch real-time data with AbortController to prevent OBS crashes
@@ -147,6 +150,9 @@ async function pollESPN() {
                 currentState.timer.isRunning = false;
                 matchStatus.textContent = 'MATCH ENDED';
                 
+                // Hide goal banner since match is over
+                latestGoalBanner.classList.add('hidden');
+                
                 // Handle 5-minute cooldown
                 if (!latestMatchEndTimestamp) {
                     latestMatchEndTimestamp = Date.now();
@@ -162,6 +168,9 @@ async function pollESPN() {
                 currentState.isLive = false;
                 currentState.timer.isRunning = false;
                 matchStatus.textContent = 'UPCOMING MATCH';
+                
+                // Ensure goal banner is hidden for upcoming matches
+                latestGoalBanner.classList.add('hidden');
             }
             
             // Goal Detection
