@@ -22,9 +22,8 @@ body {
     width: 1920px;
     height: 1080px;
     position: relative;
-    /* Hardware acceleration base */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    /* Hardware acceleration base removed */
+    /* transform: translateZ(0); */
 }
 
 .scoreboard-container {
@@ -37,7 +36,7 @@ body {
     box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
     border-radius: 14px;
     animation: fadeIn 1s ease-out;
-    will-change: transform, opacity;
+    /* Hardware acceleration removed to prevent Valorant crashes */
 }
 
 .scoreboard {
@@ -79,7 +78,7 @@ body {
     font-size: 14px;
     color: rgba(255,255,255,0.95);
     animation: pulse 2s infinite;
-    will-change: opacity;
+    /* Removed translateZ */
 }
 
 .team {
@@ -164,7 +163,7 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: shineText 5s linear infinite;
-    will-change: background-position;
+    /* Removed translateZ */
 }
 
 .branding-text {
@@ -199,18 +198,18 @@ body {
     color: white;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    will-change: transform, opacity;
+    /* Hardware acceleration removed to prevent Valorant crashes */
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px) translateZ(0); }
-    to { opacity: 1; transform: translateY(0) translateZ(0); }
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .football-icon {
     font-size: 16px;
     animation: bounceSpin 2s infinite;
-    will-change: transform;
+    /* Removed translateZ */
 }
 
 /* Advanced Goal Popup */
@@ -218,7 +217,7 @@ body {
     position: absolute;
     bottom: 120px;
     left: 50%;
-    transform: translateX(-50%) translateZ(0);
+    transform: translateX(-50%);
     background: rgba(10, 10, 12, 0.9);
     padding: 30px 80px;
     border-radius: 20px;
@@ -229,7 +228,7 @@ body {
     box-shadow: 0 0 40px var(--accent), inset 0 0 20px var(--accent);
     backdrop-filter: blur(20px);
     overflow: hidden;
-    will-change: transform, opacity;
+    /* Hardware acceleration removed to prevent Valorant crashes */
 }
 
 .goal-light {
@@ -242,7 +241,7 @@ body {
     animation: rotateLight 2s linear infinite;
     z-index: -1;
     opacity: 0.5;
-    will-change: transform;
+    /* Removed translateZ */
 }
 
 .goal-popup.hidden { display: none; }
@@ -282,8 +281,8 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px) translateZ(0); }
-    to { opacity: 1; transform: translateY(0) translateZ(0); }
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse {
@@ -297,31 +296,31 @@ body {
 }
 
 @keyframes rotateLight {
-    100% { transform: rotate(360deg) translateZ(0); }
+    100% { transform: rotate(360deg); }
 }
 
 @keyframes bounceSpin {
-    0% { transform: translateY(0) rotate(0deg) translateZ(0); }
-    50% { transform: translateY(-5px) rotate(180deg) translateZ(0); }
-    100% { transform: translateY(0) rotate(360deg) translateZ(0); }
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(180deg); }
+    100% { transform: translateY(0) rotate(360deg); }
 }
 
 @keyframes goalPop {
-    0% { transform: translate(-50%, 150px) scale(0.5) translateZ(0); opacity: 0; }
-    70% { transform: translate(-50%, -20px) scale(1.1) translateZ(0); opacity: 1; }
-    100% { transform: translate(-50%, 0) scale(1) translateZ(0); opacity: 1; }
+    0% { transform: translate(-50%, 150px) scale(0.5); opacity: 0; }
+    70% { transform: translate(-50%, -20px) scale(1.1); opacity: 1; }
+    100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
 }
 
 @keyframes goalShake {
-    0%, 100% { transform: translate(-50%, 0) translateZ(0); }
-    25% { transform: translate(-52%, 2px) translateZ(0); }
-    50% { transform: translate(-48%, -2px) translateZ(0); }
-    75% { transform: translate(-51%, -1px) translateZ(0); }
+    0%, 100% { transform: translate(-50%, 0); }
+    25% { transform: translate(-52%, 2px); }
+    50% { transform: translate(-48%, -2px); }
+    75% { transform: translate(-51%, -1px); }
 }
 
 @keyframes goalFadeOut {
-    0% { transform: translate(-50%, 0) scale(1) translateZ(0); opacity: 1; }
-    100% { transform: translate(-50%, 50px) scale(0.9) translateZ(0); opacity: 0; filter: blur(10px); }
+    0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, 50px) scale(0.9); opacity: 0; filter: blur(10px); }
 }
 
 /* Main Overlay Celebration Animation */
@@ -331,9 +330,9 @@ body {
 
 @keyframes mainOverlayPulse {
     0% {
-        transform: scale(1) translateZ(0);
+        transform: scale(1);
     }
     100% {
-        transform: scale(1.05) translateZ(0);
+        transform: scale(1.05);
     }
 }

@@ -1,3 +1,9 @@
+// --- CONFIGURATION ---
+// If you want to track a specific team, type their 3-letter code here (e.g., 'MEX', 'USA', 'ARG').
+// If you leave it empty (''), the overlay will just auto-select the first live match it finds.
+const TARGET_TEAM = ''; 
+// ---------------------
+
 // DOM Elements
 const timeEl = document.getElementById('match-time');
 const t1Name = document.getElementById('name-t1');
@@ -113,21 +119,47 @@ async function fetchWithTimeout(resource, options = {}) {
 
 async function pollESPN() {
     try {
-        const res = await fetchWithTimeout("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard", { timeout: 5000 });
-        if (!res.ok) return;
+        const endpoints = [
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.euro/scoreboard",
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/conmebol.america/scoreboard",
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+        ];
         
-        const data = await res.json();
+        // Fetch all major international tournaments concurrently
+        const requests = endpoints.map(url => fetchWithTimeout(url, { timeout: 5000 }).then(r => r.ok ? r.json() : { events: [] }));
+        const responses = await Promise.all(requests);
         
-        if (data.events && data.events.length > 0) {
+        // Merge all events into one massive array
+        let allEvents = [];
+        responses.forEach(data => {
+            if (data && data.events) {
+                allEvents = allEvents.concat(data.events);
+            }
+        });
+        
+        if (allEvents.length > 0) {
             
             // Filter out completed matches that have expired their 5-minute cooldown
-            const validEvents = data.events.filter(e => !completedMatches.has(e.id));
+            const validEvents = allEvents.filter(e => !completedMatches.has(e.id));
             if (validEvents.length === 0) return; // All matches completed and expired
             
-            // Priority: 1. In-progress 2. Just finished (within 5 mins) 3. Next upcoming
-            let targetEvent = validEvents.find(e => e.status.type.state === 'in') 
+            let targetEvent;
+            
+            // 1. If user set a TARGET_TEAM, strictly find that team's match first
+            if (TARGET_TEAM) {
+                targetEvent = validEvents.find(e => {
+                    const home = e.competitions[0].competitors[0].team.abbreviation.toUpperCase();
+                    const away = e.competitions[0].competitors[1].team.abbreviation.toUpperCase();
+                    return home === TARGET_TEAM || away === TARGET_TEAM;
+                });
+            }
+            
+            // 2. Fallback Priority: In-progress -> Just finished -> Next upcoming
+            if (!targetEvent) {
+                targetEvent = validEvents.find(e => e.status.type.state === 'in') 
                            || validEvents.find(e => e.status.type.state === 'post')
                            || validEvents[0];
+            }
                            
             const comp = targetEvent.competitions[0];
             const home = comp.competitors[0];
