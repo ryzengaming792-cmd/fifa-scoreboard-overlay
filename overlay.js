@@ -7,6 +7,9 @@ const t2Score = document.getElementById('score-t2');
 const matchStatus = document.getElementById('match-status');
 const scoreDivider = document.querySelector('.score-divider');
 
+const t1Flag = document.getElementById('flag-t1');
+const t2Flag = document.getElementById('flag-t2');
+
 const goalPopup = document.getElementById('goal-popup');
 const goalScorerTeam = document.getElementById('goal-scorer-team');
 
@@ -77,39 +80,33 @@ function triggerGoalAnimation(teamName) {
     }, 6500);
 }
 
-// Polling Google via CORS proxy
-async function pollGoogle() {
-    console.log("Fetching live scores...");
+// Fetch real-time data from ESPN's public JSON API
+async function pollESPN() {
+    console.log("Fetching live scores from ESPN...");
     try {
-        const query = encodeURIComponent("https://www.google.com/search?q=live+football+scores+today");
-        // Using corsproxy.io to bypass browser CORS limits
-        const res = await fetch(`https://corsproxy.io/?${query}`);
+        const res = await fetch("https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard");
         if (!res.ok) return;
         
-        const html = await res.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
+        const data = await res.json();
         
-        // Extract teams and scores from Google's Sports Widget
-        const t1Node = doc.querySelector('.imso_mh__first-tn-ed, .imso_mh__tm-nm, [role="heading"]');
-        const t2Nodes = doc.querySelectorAll('.imso_mh__second-tn-ed, .imso_mh__tm-nm, [role="heading"]');
-        const t2Node = t2Nodes.length > 1 ? t2Nodes[1] : null;
-        
-        const score1Node = doc.querySelector('.imso_mh__l-tm-sc');
-        const score2Node = doc.querySelector('.imso_mh__r-tm-sc');
-        
-        if (t1Node && t2Node && score1Node && score2Node) {
-            const s1Text = score1Node.textContent.trim();
-            const s2Text = score2Node.textContent.trim();
-            const newT1Name = t1Node.textContent.trim().substring(0, 3).toUpperCase();
-            const newT2Name = t2Node.textContent.trim().substring(0, 3).toUpperCase();
+        if (data.events && data.events.length > 0) {
+            // Find a live match first, otherwise fallback to the first upcoming match
+            let targetEvent = data.events.find(e => e.status.type.state === 'in') || data.events[0];
+            
+            const comp = targetEvent.competitions[0];
+            const home = comp.competitors[0];
+            const away = comp.competitors[1];
 
-            // Verify the match has actually started by checking if scores are numbers
-            if (s1Text !== '' && !isNaN(s1Text) && s2Text !== '' && !isNaN(s2Text)) {
-                const newT1Score = parseInt(s1Text) || 0;
-                const newT2Score = parseInt(s2Text) || 0;
-                
-                // Only trigger goal animation if it was already live (to prevent popups when first loading the page)
+            const newT1Name = home.team.abbreviation.substring(0, 3).toUpperCase();
+            const newT2Name = away.team.abbreviation.substring(0, 3).toUpperCase();
+            const newT1Score = parseInt(home.score) || 0;
+            const newT2Score = parseInt(away.score) || 0;
+            
+            // Check match state
+            const isMatchLive = targetEvent.status.type.state === 'in';
+            
+            if (isMatchLive) {
+                // Goal Detection
                 if (currentState.isLive) {
                     if (newT1Score > currentState.team1.score) triggerGoalAnimation(newT1Name);
                     if (newT2Score > currentState.team2.score) triggerGoalAnimation(newT2Name);
@@ -118,27 +115,27 @@ async function pollGoogle() {
                 currentState.isLive = true;
                 currentState.timer.isRunning = true;
                 
-                currentState.team1.name = newT1Name;
-                currentState.team1.score = newT1Score;
-                currentState.team2.name = newT2Name;
-                currentState.team2.score = newT2Score;
-                
-                updateDOM();
+                // Parse exact minutes from ESPN display clock (e.g., "45'")
+                let clockStr = targetEvent.status.displayClock || "0";
+                currentState.timer.minutes = parseInt(clockStr.replace("'", "")) || currentState.timer.minutes;
             } else {
                 console.log("Match found but hasn't started yet. Staying in upcoming mode.");
-                // Update the team names to show the correct upcoming teams!
-                currentState.team1.name = newT1Name;
-                currentState.team2.name = newT2Name;
-                
                 currentState.isLive = false;
                 currentState.timer.isRunning = false;
-                updateDOM();
             }
-        } else {
-            console.log("No live match widget found. Staying in upcoming mode.");
-            currentState.isLive = false;
-            currentState.timer.isRunning = false;
+
+            currentState.team1.name = newT1Name;
+            currentState.team1.score = newT1Score;
+            currentState.team2.name = newT2Name;
+            currentState.team2.score = newT2Score;
+            
+            // Update flags if available
+            if (home.team.logo) t1Flag.src = home.team.logo;
+            if (away.team.logo) t2Flag.src = away.team.logo;
+
             updateDOM();
+        } else {
+            console.log("No World Cup events found.");
         }
     } catch (e) {
         console.error("Failed to parse live scores", e);
@@ -147,5 +144,5 @@ async function pollGoogle() {
 
 // Initial update and start polling every 30 seconds
 updateDOM();
-pollGoogle();
-setInterval(pollGoogle, 30000);
+pollESPN();
+setInterval(pollESPN, 30000);
